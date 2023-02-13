@@ -23,12 +23,11 @@ object Main {
 
     val delaunay = new Delaunay(inputPoints.orElse(filePoints).getOrElse(defaultPoints))
 
-    val convex = delaunay.getConvexHull
+    val triangles = delaunay.getTriangulation(verbose = true)
+    val convex = delaunay.getConvexHull(verbose = true)
+
     println(s"Points: ${delaunay.points.map(_.mkString("[", ", ", "]")).mkString("[", ", ", "]")}")
     println(s"Convex Hull: ${convex.mkString("[", ", ", "]")}")
-
-    val triangles = delaunay.getTriangulation
-
     println(s"Triangulation: ${triangles.map(_.mkString("[", ", ", "]")).mkString("[", ", ", "]")}")
     triangles.foreach { case Array(i, j, k) =>
       println(

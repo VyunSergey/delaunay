@@ -32,8 +32,8 @@ class DelaunaySpec extends AnyPropSpec with TableDrivenPropertyChecks with shoul
                       trianglesExp: Array[(Int, Int, Int)],
                       convexExp: Array[Int]) =>
       val delaunay = Delaunay(points)
-      val triangles = delaunay.getTriangulation
-      val convex = delaunay.getConvexHull
+      val triangles = delaunay.getTriangulation()
+      val convex = delaunay.getConvexHull()
 
       triangles should contain theSameElementsAs trianglesExp
       convex should contain theSameElementsAs convexExp

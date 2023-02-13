@@ -1,6 +1,7 @@
 import scala.collection.mutable
-
 import Delaunay._
+
+import scala.annotation.tailrec
 
 class Delaunay(val points: Array[Array[Double]]) {
   // Граф триангуляцию Делоне в виде пары точек (p, q) -> Set - множество точек вершин треугольника на ребре (p, q)
@@ -8,21 +9,21 @@ class Delaunay(val points: Array[Array[Double]]) {
     mutable.HashMap.empty[(Int, Int), Set[Int]].withDefaultValue(Set.empty[Int])
 
   // Вычислить триангуляцию Делоне множества точек points
-  def getTriangulation: Array[Array[Int]] = {
-    if (graph.isEmpty) build()
+  def getTriangulation(verbose: Boolean = false): Array[Array[Int]] = {
+    if (graph.isEmpty) build(verbose)
     graphToTriangles(graph)
   }
 
   // Вычислить выпуклую оболочку множества точек points
-  def getConvexHull: Array[Int] = {
-    if (graph.isEmpty) build()
+  def getConvexHull(verbose: Boolean = false): Array[Int] = {
+    if (graph.isEmpty) build(verbose)
     graphToConvexHull(graph)
   }
 
   private val convexPoints: Array[Convex] = Array.fill(points.length)(Convex(0, 0))
   private val recursionStack: mutable.Queue[(Int, Int)] = mutable.Queue.empty[(Int, Int)]
 
-  private def build(): Unit = {
+  private def build(verbose: Boolean = false): Unit = {
     if (points.length >= 3) {
       points.sortInPlaceBy(_.head)
 
@@ -34,8 +35,20 @@ class Delaunay(val points: Array[Array[Double]]) {
       // У пары точек (0, 1) делаем вершину в точке 2
       graph += (0, 1) -> Set(2)
 
+      if (verbose) println(
+        Console.GREEN +
+          """STARTING Delaunay Triangulation
+            |""".stripMargin +
+          Console.RESET)
+
       // Начиная с точки 2 строим триангуляцию Делоне
-      for (i <- 2 until points.length) AddPointToTriangulation(i)
+      for (i <- 2 until points.length) AddPointToTriangulation(i, verbose)
+
+      if (verbose) println(
+        Console.GREEN +
+          """FINISHING Delaunay Triangulation
+            |""".stripMargin +
+          Console.RESET)
     }
   }
 
@@ -43,8 +56,17 @@ class Delaunay(val points: Array[Array[Double]]) {
   // Берется предыдущая последняя точка i - 1 для которой уже есть триангуляция
   // В цикле происходит обход всех точек на границе триангуляции: по часовой и против часовой
   // и для них добавляются новые треугольники с вершинами в точке i
-  private def AddPointToTriangulation(i: Int): Unit = {
+  private def AddPointToTriangulation(i: Int, verbose: Boolean = false): Unit = {
     val pointI: Point = Point(points(i))
+
+    if (verbose) println(
+      Console.YELLOW +
+        s"""current i: $i point: $pointI
+           |current left  convex hull: ${leftConvex(convexPoints(i - 1).left, i - 1, List(i - 1)).mkString("->")}
+           |current right convex hull: ${rightConvex(convexPoints(i - 1).right, i - 1, List(i - 1)).mkString("->")}
+           |current graph: ${graph.mkString(", ")}
+           |""".stripMargin +
+        Console.RESET)
 
     var prevHullPt: Int = -1
     var hullPt: Int = i - 1
@@ -173,6 +195,16 @@ class Delaunay(val points: Array[Array[Double]]) {
     sR - pqrR > -EPS
   }
 
+  @tailrec
+  private def leftConvex(i: Int, start: Int, res: List[Int] = Nil): List[Int] = {
+    if (i == start) (i :: res).reverse else leftConvex(convexPoints(i).left, start, i :: res)
+  }
+
+  @tailrec
+  private def rightConvex(i: Int, start: Int, res: List[Int] = Nil): List[Int] = {
+    if (i == start) (i :: res).reverse else rightConvex(convexPoints(i).right, start, i :: res)
+  }
+
   private def orderPair(left: Int, right: Int): (Int, Int) = {
     (Math.min(left, right), Math.max(left, right))
   }
@@ -183,7 +215,9 @@ object Delaunay {
 
   def apply(points: Array[Array[Double]] = Array.empty[Array[Double]]) = new Delaunay(points)
 
-  final case class Point(x: Double, y: Double)
+  final case class Point(x: Double, y: Double) {
+    override def toString: String = s"($x, $y)"
+  }
 
   object Point {
     def apply(arr: Array[Double]): Point = Point(arr(0), arr(1))
