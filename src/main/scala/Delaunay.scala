@@ -3,7 +3,8 @@ import scala.collection.mutable
 import Delaunay._
 
 class Delaunay(val points: Array[Array[Double]]) {
-  val graph: mutable.HashMap[(Int, Int), Set[Int]] = mutable.HashMap.empty[(Int, Int), Set[Int]]
+  val graph: mutable.Map[(Int, Int), Set[Int]] =
+    mutable.HashMap.empty[(Int, Int), Set[Int]].withDefaultValue(Set.empty[Int])
 
   // Вычислить триангуляцию Делоне множества точек points
   def getTriangulation: Array[(Int, Int, Int)] = {
@@ -27,7 +28,7 @@ class Delaunay(val points: Array[Array[Double]]) {
       // Инициализация первого треугольника
       convexPoints(0) = Array(1, 1)
       convexPoints(1) = Array(0, 0)
-      graph += (0, 1) -> (graph.getOrElse((0, 1), Set.empty[Int]) + 2)
+      graph += (0, 1) -> (graph((0, 1)) + 2)
 
       for (i <- 2 until points.length) AddPointToTriangulation(i)
     }
@@ -152,7 +153,7 @@ class Delaunay(val points: Array[Array[Double]]) {
   }
 
   private def getByPair(pair: (Int, Int)): Set[Int] = {
-    graph.getOrElse(pair, Set.empty[Int])
+    graph(pair)
   }
 
   private def orderPair(left: Int, right: Int): (Int, Int) = {
@@ -166,7 +167,7 @@ object Delaunay {
   def apply(points: Array[Array[Double]] = Array.empty[Array[Double]]) = new Delaunay(points)
 
   // Функция построения триангуляции Делоне множества точек
-  def graphToTriangles(graph: mutable.HashMap[(Int, Int), Set[Int]]): Array[(Int, Int, Int)] = {
+  def graphToTriangles(graph: mutable.Map[(Int, Int), Set[Int]]): Array[(Int, Int, Int)] = {
     graph.flatMap { case ((i, j), set) =>
       set.map(k => List(i, j, k).sorted)
     }.collect {
@@ -175,7 +176,7 @@ object Delaunay {
   }
 
   // Функция построения выпуклой оболочки множества точек
-  def graphToConvexHull(graph: mutable.HashMap[(Int, Int), Set[Int]]): Array[Int] = {
+  def graphToConvexHull(graph: mutable.Map[(Int, Int), Set[Int]]): Array[Int] = {
     graph.foldLeft(Set.empty[Int]) { case (res, ((i, j), set)) =>
       if (set.size < 2) res + i + j else res
     }.toArray.sorted
