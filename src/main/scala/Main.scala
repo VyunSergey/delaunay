@@ -29,8 +29,8 @@ object Main {
 
     val triangles = delaunay.getTriangulation
 
-    println(s"Triangulation: ${triangles.mkString("[", ", ", "]")}")
-    triangles.foreach { case (i, j, k) =>
+    println(s"Triangulation: ${triangles.map(_.mkString("[", ", ", "]")).mkString("[", ", ", "]")}")
+    triangles.foreach { case Array(i, j, k) =>
       println(
         delaunay.points(i).mkString("[", ", ", "]"),
         delaunay.points(j).mkString("[", ", ", "]"),

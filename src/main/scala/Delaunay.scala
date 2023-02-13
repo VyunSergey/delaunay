@@ -7,7 +7,7 @@ class Delaunay(val points: Array[Array[Double]]) {
     mutable.HashMap.empty[(Int, Int), Set[Int]].withDefaultValue(Set.empty[Int])
 
   // Вычислить триангуляцию Делоне множества точек points
-  def getTriangulation: Array[(Int, Int, Int)] = {
+  def getTriangulation: Array[Array[Int]] = {
     if (graph.isEmpty) build()
     graphToTriangles(graph)
   }
@@ -36,7 +36,7 @@ class Delaunay(val points: Array[Array[Double]]) {
 
   // Добавление новой внешней точки i в триангуляции Делоне:
   // Берется предыдущая последняя точка i - 1 для которой уже есть триангуляция
-  // В цикле происходит отход всех точек на границе триангуляции: по часовой и против часовой
+  // В цикле происходит обход всех точек на границе триангуляции: по часовой и против часовой
   // и для них добавляются новые треугольники с вершинами в точке i
   private def AddPointToTriangulation(i: Int): Unit = {
     var prevHullPt: Int = -1
@@ -167,12 +167,16 @@ object Delaunay {
   def apply(points: Array[Array[Double]] = Array.empty[Array[Double]]) = new Delaunay(points)
 
   // Функция построения триангуляции Делоне множества точек
-  def graphToTriangles(graph: mutable.Map[(Int, Int), Set[Int]]): Array[(Int, Int, Int)] = {
+  def graphToTriangles(graph: mutable.Map[(Int, Int), Set[Int]]): Array[Array[Int]] = {
     graph.flatMap { case ((i, j), set) =>
       set.map(k => List(i, j, k).sorted)
     }.collect {
       case i :: j :: k :: Nil => (i, j, k)
-    }.toSet.toArray.sorted
+    }.toSet
+      .toArray
+      .sorted.map {
+      case (i, j, k) => Array(i, j, k)
+    }
   }
 
   // Функция построения выпуклой оболочки множества точек
